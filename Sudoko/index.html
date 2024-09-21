@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Sudoku Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+        }
+        .sudoku-board {
+            display: inline-grid;
+            grid-template-columns: repeat(9, 40px);
+            gap: 1px;
+            background-color: #000;
+            border: 2px solid #000;
+            margin-bottom: 20px;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .cell:nth-child(3n) {
+            border-right: 2px solid #000;
+        }
+        .cell:nth-child(n+19):nth-child(-n+27),
+        .cell:nth-child(n+46):nth-child(-n+54) {
+            border-bottom: 2px solid #000;
+        }
+        .initial {
+            font-weight: bold;
+            color: #00008b;
+        }
+        .selected {
+            background-color: #e6e6e6;
+        }
+        .invalid {
+            color: red;
+        }
+        .buttons {
+            margin-top: 20px;
+        }
+        button, select {
+            margin: 0 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #difficultySelect{
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Dynamic Sudoku Game</h1>
+        <div>
+            <select id="difficultySelect">
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+            </select>
+            <button id="newGameBtn">New Game</button>
+        </div>
+        <div class="sudoku-board" id="sudokuBoard"></div>
+        <div class="buttons">
+            <button id="solveBtn">Solve</button>
+            <button id="checkBtn">Check Solution</button>
+        </div>
+    </div>
+    <script>
+        const board = document.getElementById('sudokuBoard');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const solveBtn = document.getElementById('solveBtn');
+        const checkBtn = document.getElementById('checkBtn');
+        const difficultySelect = document.getElementById('difficultySelect');
+
+        let puzzle = [];
+        let solution = [];
+        let selectedCell = null;
+
+        const puzzles = {
+            easy: [
+                {
+                    puzzle: [
+                        5,3,0,0,7,0,0,0,0,
+                        6,0,0,1,9,5,0,0,0,
+                        0,9,8,0,0,0,0,6,0,
+                        8,0,0,0,6,0,0,0,3,
+                        4,0,0,8,0,3,0,0,1,
+                        7,0,0,0,2,0,0,0,6,
+                        0,6,0,0,0,0,2,8,0,
+                        0,0,0,4,1,9,0,0,5,
+                        0,0,0,0,8,0,0,7,9
+                    ],
+                    solution: [
+                        5,3,4,6,7,8,9,1,2,
+                        6,7,2,1,9,5,3,4,8,
+                        1,9,8,3,4,2,5,6,7,
+                        8,5,9,7,6,1,4,2,3,
+                        4,2,6,8,5,3,7,9,1,
+                        7,1,3,9,2,4,8,5,6,
+                        9,6,1,5,3,7,2,8,4,
+                        2,8,7,4,1,9,6,3,5,
+                        3,4,5,2,8,6,1,7,9
+                    ]
+                },
+                {
+                    puzzle: [
+                        0,0,0,2,6,0,7,0,1,
+                        6,8,0,0,7,0,0,9,0,
+                        1,9,0,0,0,4,5,0,0,
+                        8,2,0,1,0,0,0,4,0,
+                        0,0,4,6,0,2,9,0,0,
+                        0,5,0,0,0,3,0,2,8,
+                        0,0,9,3,0,0,0,7,4,
+                        0,4,0,0,5,0,0,3,6,
+                        7,0,3,0,1,8,0,0,0
+                    ],
+                    solution: [
+                        4,3,5,2,6,9,7,8,1,
+                        6,8,2,5,7,1,4,9,3,
+                        1,9,7,8,3,4,5,6,2,
+                        8,2,6,1,9,5,3,4,7,
+                        3,7,4,6,8,2,9,1,5,
+                        9,5,1,7,4,3,6,2,8,
+                        5,1,9,3,2,6,8,7,4,
+                        2,4,8,9,5,7,1,3,6,
+                        7,6,3,4,1,8,2,5,9
+                    ]
+                }
+            ],
+            medium: [
+                {
+                    puzzle: [
+                        0,0,0,6,0,0,4,0,0,
+                        7,0,0,0,0,3,6,0,0,
+                        0,0,0,0,9,1,0,8,0,
+                        0,0,0,0,0,0,0,0,0,
+                        0,5,0,1,8,0,0,0,3,
+                        0,0,0,3,0,6,0,4,5,
+                        0,4,0,2,0,0,0,6,0,
+                        9,0,3,0,0,0,0,0,0,
+                        0,2,0,0,0,0,1,0,0
+                    ],
+                    solution: [
+                        5,8,1,6,7,2,4,3,9,
+                        7,9,2,8,4,3,6,5,1,
+                        3,6,4,5,9,1,7,8,2,
+                        4,3,8,9,5,7,2,1,6,
+                        2,5,6,1,8,4,9,7,3,
+                        1,7,9,3,2,6,8,4,5,
+                        8,4,5,2,1,9,3,6,7,
+                        9,1,3,7,6,8,5,2,4,
+                        6,2,7,4,3,5,1,9,8
+                    ]
+                },
+                {
+                    puzzle: [
+                        0,2,0,6,0,8,0,0,0,
+                        5,8,0,0,0,9,7,0,0,
+                        0,0,0,0,4,0,0,0,0,
+                        3,7,0,0,0,0,5,0,0,
+                        6,0,0,0,0,0,0,0,4,
+                        0,0,8,0,0,0,0,1,3,
+                        0,0,0,0,2,0,0,0,0,
+                        0,0,9,8,0,0,0,3,6,
+                        0,0,0,3,0,6,0,9,0
+                    ],
+                    solution: [
+                        1,2,3,6,7,8,9,4,5,
+                        5,8,4,2,3,9,7,6,1,
+                        9,6,7,1,4,5,3,2,8,
+                        3,7,2,4,6,1,5,8,9,
+                        6,9,1,5,8,3,2,7,4,
+                        4,5,8,7,9,2,6,1,3,
+                        8,3,6,9,2,4,1,5,7,
+                        2,1,9,8,5,7,4,3,6,
+                        7,4,5,3,1,6,8,9,2
+                    ]
+                }
+            ],
+            hard: [
+                {
+                    puzzle: [
+                        0,0,0,0,0,0,0,0,0,
+                        0,0,0,0,0,3,0,8,5,
+                        0,0,1,0,2,0,0,0,0,
+                        0,0,0,5,0,7,0,0,0,
+                        0,0,4,0,0,0,1,0,0,
+                        0,9,0,0,0,0,0,0,0,
+                        5,0,0,0,0,0,0,7,3,
+                        0,0,2,0,1,0,0,0,0,
+                        0,0,0,0,4,0,0,0,9
+                    ],
+                    solution: [
+                        9,8,7,6,5,4,3,2,1,
+                        2,4,6,1,7,3,9,8,5,
+                        3,5,1,9,2,8,7,4,6,
+                        1,2,8,5,3,7,6,9,4,
+                        6,3,4,8,9,2,1,5,7,
+                        7,9,5,4,6,1,8,3,2,
+                        5,1,9,2,8,6,4,7,3,
+                        4,7,2,3,1,9,5,6,8,
+                        8,6,3,7,4,5,2,1,9
+                    ]
+                },
+                {
+                    puzzle: [
+                        0,0,0,0,0,0,0,0,0,
+                        0,0,0,0,0,3,0,8,5,
+                        0,0,1,0,2,0,0,0,0,
+                        0,0,0,5,0,7,0,0,0,
+                        0,0,4,0,0,0,1,0,0,
+                        0,9,0,0,0,0,0,0,0,
+                        5,0,0,0,0,0,0,7,3,
+                        0,0,2,0,1,0,0,0,0,
+                        0,0,0,0,4,0,0,0,9
+                    ],
+                    solution: [
+                        9,8,7,6,5,4,3,2,1,
+                        2,4,6,1,7,3,9,8,5,
+                        3,5,1,9,2,8,7,4,6,
+                        1,2,8,5,3,7,6,9,4,
+                        6,3,4,8,9,2,1,5,7,
+                        7,9,5,4,6,1,8,3,2,
+                        5,1,9,2,8,6,4,7,3,
+                        4,7,2,3,1,9,5,6,8,
+                        8,6,3,7,4,5,2,1,9
+                    ]
+                }
+            ]
+        };
+
+        function createBoard() {
+            board.innerHTML = '';
+            for (let i = 0; i < 81; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.dataset.index = i;
+                cell.addEventListener('click', selectCell);
+                board.appendChild(cell);
+            }
+        }
+
+        function selectCell(e) {
+            if (selectedCell) {
+                selectedCell.classList.remove('selected');
+            }
+            selectedCell = e.target;
+            selectedCell.classList.add('selected');
+        }
+
+        function fillBoard() {
+            const cells = board.getElementsByClassName('cell');
+            for (let i = 0; i < 81; i++) {
+                const cell = cells[i];
+                const value = puzzle[i];
+                if (value !== 0) {
+                    cell.textContent = value;
+                    cell.classList.add('initial');
+                } else {
+                    cell.textContent = '';
+                    cell.classList.remove('initial');
+                }
+                cell.classList.remove('invalid');
+            }
+        }
+
+        function newGame() {
+            const difficulty = difficultySelect.value;
+            const puzzleSet = puzzles[difficulty];
+            const randomIndex = Math.floor(Math.random() * puzzleSet.length);
+            puzzle = [...puzzleSet[randomIndex].puzzle];
+            solution = [...puzzleSet[randomIndex].solution];
+            fillBoard();
+        }
+
+        function solve() {
+            const cells = board.getElementsByClassName('cell');
+            for (let i = 0; i < 81; i++) {
+                const cell = cells[i];
+                cell.textContent = solution[i];
+                cell.classList.remove('invalid');
+            }
+        }
+
+        function checkSolution() {
+            const cells = board.getElementsByClassName('cell');
+            let isCorrect = true;
+            for (let i = 0; i < 81; i++) {
+                const cell = cells[i];
+                const value = parseInt(cell.textContent) || 0;
+                if (value !== solution[i]) {
+                    cell.classList.add('invalid');
+                    isCorrect = false;
+                } else {
+                    cell.classList.remove('invalid');
+                }
+            }
+            alert(isCorrect ? 'Congratulations! The solution is correct!' : 'The solution is incorrect. Try again!');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (selectedCell && !selectedCell.classList.contains('initial')) {
+                if (e.key >= '1' && e.key <= '9') {
+                    selectedCell.textContent = e.key;
+                    selectedCell.classList.remove('invalid');
+                } else if (e.key === 'Backspace' || e.key === 'Delete') {
+                    selectedCell.textContent = '';
+                    selectedCell.classList.remove('invalid');
+                }
+            }
+        });
+
+        newGameBtn.addEventListener('click', newGame);
+        solveBtn.addEventListener('click', solve);
+        checkBtn.addEventListener('click', checkSolution);
+
+        createBoard();
+        newGame();
+    </script>
+</body>
+</html>

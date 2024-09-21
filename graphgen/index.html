@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Graph Generator Pro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        .node circle {
+            stroke: #fff;
+            stroke-width: 3px;
+        }
+        .node text {
+            font-size: 12px;
+        }
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+        .context-menu {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 5px;
+            display: none;
+        }
+        .scrollable-select {
+            max-height: 100px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4">Advanced Graph Generator Pro</h1>
+        <div class="flex">
+            <div class="w-1/4 pr-4">
+                <div class="bg-white shadow-md rounded p-4 mb-4">
+                    <h2 class="text-xl font-semibold mb-2">Graph Pages</h2>
+                    <select id="graph-pages" class="w-full p-2 border rounded mb-2 scrollable-select"></select>
+                    <input type="text" id="new-page-input" class="w-full p-2 border rounded mb-2" placeholder="New Page Name">
+                    <button id="add-page" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Add Page</button>
+                </div>
+                <div class="bg-white shadow-md rounded p-4 mb-4">
+                    <h2 class="text-xl font-semibold mb-2">Add Node</h2>
+                    <input type="text" id="node-input" class="w-full p-2 border rounded mb-2" placeholder="Node Name">
+                    <input type="color" id="node-color" class="w-full p-2 border rounded mb-2">
+                    <button id="add-node" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Add Node</button>
+                </div>
+                <div class="bg-white shadow-md rounded p-4 mb-4">
+                    <h2 class="text-xl font-semibold mb-2">Connect Nodes</h2>
+                    <select id="source-node" class="w-full p-2 border rounded mb-2 scrollable-select"></select>
+                    <select id="target-node" class="w-full p-2 border rounded mb-2 scrollable-select"></select>
+                    <button id="connect-nodes" class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">Connect Nodes</button>
+                </div>
+                <div class="bg-white shadow-md rounded p-4 mb-4">
+                    <h2 class="text-xl font-semibold mb-2">Export</h2>
+                    <button id="export-json" class="w-full bg-purple-500 text-white p-2 rounded mb-2 hover:bg-purple-600">Export JSON</button>
+                    <button id="export-pdf" class="w-full bg-purple-500 text-white p-2 rounded hover:bg-purple-600">Export PDF</button>
+                </div>
+            </div>
+            <div class="w-3/4 bg-white shadow-md rounded p-4">
+                <div id="graph-container" class="w-full h-[600px]"></div>
+                <div class="flex justify-center mt-4">
+                    <button id="zoom-in" class="bg-gray-300 p-2 rounded mr-2 hover:bg-gray-400">Zoom In</button>
+                    <button id="zoom-out" class="bg-gray-300 p-2 rounded mr-2 hover:bg-gray-400">Zoom Out</button>
+                    <button id="reset-zoom" class="bg-gray-300 p-2 rounded hover:bg-gray-400">Reset Zoom</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="context-menu" class="context-menu">
+        <button id="edit-node" class="block w-full text-left p-2 hover:bg-gray-200">Edit Node</button>
+        <button id="delete-node" class="block w-full text-left p-2 hover:bg-gray-200">Delete Node</button>
+        <button id="show-connections" class="block w-full text-left p-2 hover:bg-gray-200">Show Connections</button>
+    </div>
+
+    <script>
+        let currentPage = 'default';
+        let graphPages = { default: { nodes: [], links: [] } };
+        let selectedNode = null;
+
+        const width = 800;
+        const height = 600;
+
+        const svg = d3.select("#graph-container")
+            .append("svg")
+            .attr("width", "100%")
+            .attr("height", "100%")
+            .attr("viewBox", `0 0 ${width} ${height}`);
+
+        const g = svg.append("g");
+
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 4])
+            .on("zoom", (event) => {
+                g.attr("transform", event.transform);
+            });
+
+        svg.call(zoom);
+
+        const simulation = d3.forceSimulation()
+            .force("link", d3.forceLink().id(d => d.id).distance(100))
+            .force("charge", d3.forceManyBody().strength(-300))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("x", d3.forceX().strength(0.1))
+            .force("y", d3.forceY().strength(0.1));
+
+        function updateGraph() {
+            const { nodes, links } = graphPages[currentPage];
+
+            const link = g.selectAll(".link")
+                .data(links)
+                .join("line")
+                .attr("class", "link");
+
+            const node = g.selectAll(".node")
+                .data(nodes)
+                .join("g")
+                .attr("class", "node")
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended))
+                .on("click", showConnections)
+                .on("contextmenu", showContextMenu);
+
+            node.selectAll("circle")
+                .data(d => [d])
+                .join("circle")
+                .attr("r", 10)
+                .attr("fill", d => d.color);
+
+            node.selectAll("text")
+                .data(d => [d])
+                .join("text")
+                .attr("dy", ".35em")
+                .attr("x", 12)
+                .text(d => d.id);
+
+            simulation.nodes(nodes).on("tick", ticked);
+            simulation.force("link").links(links);
+            simulation.alpha(1).restart();
+
+            function ticked() {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                node
+                    .attr("transform", d => `translate(${d.x},${d.y})`);
+            }
+
+            updateNodeSelects();
+        }
+
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+
+        function showContextMenu(event, d) {
+            event.preventDefault();
+            selectedNode = d;
+            const contextMenu = document.getElementById("context-menu");
+            contextMenu.style.display = "block";
+            contextMenu.style.left = `${event.pageX}px`;
+            contextMenu.style.top = `${event.pageY}px`;
+        }
+
+        function showConnections(event, d) {
+            const connectedNodes = graphPages[currentPage].links.filter(l => l.source.id === d.id || l.target.id === d.id)
+                .map(l => l.source.id === d.id ? l.target.id : l.source.id);
+            alert(`Connected nodes: ${connectedNodes.join(', ')}`);
+        }
+
+        document.addEventListener("click", (event) => {
+            const contextMenu = document.getElementById("context-menu");
+            if (event.target.closest("#context-menu") === null) {
+                contextMenu.style.display = "none";
+            }
+        });
+
+        function updateNodeSelects() {
+            const sourceSelect = document.getElementById("source-node");
+            const targetSelect = document.getElementById("target-node");
+            sourceSelect.innerHTML = "";
+            targetSelect.innerHTML = "";
+            graphPages[currentPage].nodes.forEach(node => {
+                sourceSelect.add(new Option(node.id, node.id));
+                targetSelect.add(new Option(node.id, node.id));
+            });
+        }
+
+        function updateGraphPages() {
+            const pagesSelect = document.getElementById("graph-pages");
+            pagesSelect.innerHTML = "";
+            Object.keys(graphPages).forEach(page => {
+                pagesSelect.add(new Option(page, page));
+            });
+            pagesSelect.value = currentPage;
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('graphPages', JSON.stringify(graphPages));
+        }
+
+        function loadFromLocalStorage() {
+            const storedGraphPages = localStorage.getItem('graphPages');
+            if (storedGraphPages) {
+                graphPages = JSON.parse(storedGraphPages);
+                updateGraphPages();
+                updateGraph();
+            }
+        }
+
+        document.getElementById("add-node").addEventListener("click", () => {
+            const nodeName = document.getElementById("node-input").value.trim();
+            const nodeColor = document.getElementById("node-color").value;
+            if (nodeName) {
+                graphPages[currentPage].nodes.push({ id: nodeName, color: nodeColor });
+                document.getElementById("node-input").value = "";
+                updateGraph();
+                saveToLocalStorage();
+            }
+        });
+
+        document.getElementById("connect-nodes").addEventListener("click", () => {
+            const source = document.getElementById("source-node").value;
+            const target = document.getElementById("target-node").value;
+            if (source && target && source !== target) {
+                graphPages[currentPage].links.push({ source, target });
+                updateGraph();
+                saveToLocalStorage();
+            }
+        });
+
+        document.getElementById("edit-node").addEventListener("click", () => {
+            if (selectedNode) {
+                const newId = prompt("Enter new node name:", selectedNode.id);
+                if (newId && newId !== selectedNode.id) {
+                    selectedNode.id = newId;
+                    graphPages[currentPage].links.forEach(l => {
+                        if (l.source.id === selectedNode.id) l.source.id = newId;
+                        if (l.target.id === selectedNode.id) l.target.id = newId;
+                    });
+                    updateGraph();
+                    saveToLocalStorage();
+                }
+            }
+            document.getElementById("context-menu").style.display = "none";
+        });
+
+        document.getElementById("delete-node").addEventListener("click", () => {
+            if (selectedNode) {
+                graphPages[currentPage].nodes = graphPages[currentPage].nodes.filter(n => n.id !== selectedNode.id);
+                graphPages[currentPage].links = graphPages[currentPage].links.filter(l => l.source.id !== selectedNode.id && l.target.id !== selectedNode.id);
+                updateGraph();
+                saveToLocalStorage();
+            }
+            document.getElementById("context-menu").style.display = "none";
+        });
+
+        document.getElementById("show-connections").addEventListener("click", () => {
+            if (selectedNode) {
+                showConnections(null, selectedNode);
+            }
+            document.getElementById("context-menu").style.display = "none";
+        });
+
+        document.getElementById("zoom-in").addEventListener("click", () => {
+            svg.transition().call(zoom.scaleBy, 1.2);
+        });
+
+        document.getElementById("zoom-out").addEventListener("click", () => {
+            svg.transition().call(zoom.scaleBy, 0.8);
+        });
+
+        document.getElementById("reset-zoom").addEventListener("click", () => {
+            svg.transition().call(zoom.transform, d3.zoomIdentity);
+        });
+
+        document.getElementById("export-json").addEventListener("click", () => {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(graphPages));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "graph_data.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        });
+
+        document.getElementById("export-pdf").addEventListener("click", () => {
+            html2canvas(document.querySelector("#graph-container")).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'px',
+                    format: [canvas.width, canvas.height]
+                });
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                pdf.save("graph.pdf");
+            });
+        });
+
+        document.getElementById("add-page").addEventListener("click", () => {
+            const pageName = document.getElementById("new-page-input").value.trim();
+            if (pageName && !graphPages[pageName]) {
+                graphPages[pageName] = { nodes: [], links: [] };
+                currentPage = pageName;
+                updateGraphPages();
+                updateGraph();
+                saveToLocalStorage();
+                document.getElementById("new-page-input").value = "";
+            }
+        });
+
+        document.getElementById("graph-pages").addEventListener("change", (event) => {
+            currentPage = event.target.value;
+            updateGraph();
+        });
+
+        // Load data from local storage on page load
+        window.addEventListener("load", () => {
+            loadFromLocalStorage();
+        });
+
+        // Initialize the graph
+        updateGraphPages();
+        updateGraph();
+    </script>
+</body>
+</html>

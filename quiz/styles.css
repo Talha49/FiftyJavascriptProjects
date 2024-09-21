@@ -1,0 +1,267 @@
+/* General Styling */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+body {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Quiz Container */
+.quiz-container {
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+    max-width: 600px;
+    width: 100%;
+    color: white;
+}
+
+/* Gradient Text */
+.gradient-text {
+    background: linear-gradient(90deg, #ff9a9e, #fad0c4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Quiz Info */
+.quiz-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+}
+
+/* Quiz Content */
+.quiz-content {
+    margin-bottom: 30px;
+}
+
+.quiz-content h2 {
+    margin: 0 0 20px;
+    font-size: 1.5rem;
+}
+
+/* Options */
+.options {
+    display: grid;
+    gap: 15px;
+}
+
+.option {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.option:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.option input[type="radio"] {
+    display: none;
+}
+
+.option label {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.option label::before {
+    content: '';
+    width: 20px;
+    height: 20px;
+    border: 2px solid white;
+    border-radius: 50%;
+    margin-right: 10px;
+    transition: all 0.3s ease;
+}
+
+.option input[type="radio"]:checked + label::before {
+    background-color: white;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    border-radius: 25px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.gradient-btn {
+    background: linear-gradient(90deg, #ff9a9e, #fad0c4);
+    color: #764ba2;
+}
+
+.gradient-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* Ending Screen */
+.ending-screen {
+    text-align: center;
+}
+
+.ending-screen h1 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+
+.ending-screen p {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+}
+
+/* Admin Link */
+.admin-link {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.admin-link a {
+    text-decoration: none;
+    color: #764ba2;
+}
+
+/* Form Styling */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.form-group input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 1rem;
+}
+
+.form-group input[type="text"]::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Icons */
+.fas {
+    margin-right: 8px;
+}
+
+/* Add these styles to your existing CSS file */
+
+/* Quiz List Styling */
+.quiz-list {
+    margin-top: 30px;
+}
+
+.quiz-item {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.quiz-item h3 {
+    margin: 0 0 10px;
+    font-size: 1.2rem;
+}
+
+.edit-btn, .delete-btn {
+    padding: 5px 10px;
+    font-size: 0.9rem;
+    margin-right: 10px;
+}
+
+.edit-btn {
+    background-color: #4CAF50;
+}
+
+.delete-btn {
+    background-color: #f44336;
+}
+
+/* Popup Styling */
+.popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.popup-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+}
+
+.popup-content h2 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.popup-content p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+#close-popup {
+    background-color: #4CAF50;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .quiz-container {
+        padding: 20px;
+    }
+
+    .gradient-text {
+        font-size: 2rem;
+    }
+
+    .quiz-info {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .quiz-info p {
+        margin-bottom: 10px;
+    }
+}

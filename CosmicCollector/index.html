@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aquatic Serenity</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #0077be, #001a33);
+        }
+        #player {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 10 L90 90 L50 70 L10 90 Z" fill="white"/></svg>');
+            background-size: contain;
+            transition: all 0.5s ease;
+        }
+        .creature {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            transition: all 3s ease;
+        }
+        #depthMeter {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            font-size: 24px;
+            color: white;
+        }
+        #oxygenMeter {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 24px;
+            color: white;
+        }
+        #message {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            color: white;
+            text-align: center;
+            display: none;
+        }
+        .bubble {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: rise 5s infinite ease-in;
+        }
+        @keyframes rise {
+            0% { transform: translateY(0); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-100vh); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="player"></div>
+        <div id="depthMeter">Depth: 0 m</div>
+        <div id="oxygenMeter">Oxygen: 100%</div>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        const player = document.getElementById('player');
+        const depthMeter = document.getElementById('depthMeter');
+        const oxygenMeter = document.getElementById('oxygenMeter');
+        const message = document.getElementById('message');
+        const gameContainer = document.getElementById('gameContainer');
+
+        let depth = 0;
+        let oxygen = 100;
+        let gameActive = true;
+
+        const creatureTypes = [
+            { name: 'Fish', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M20 50 Q50 20 80 50 Q50 80 20 50 Z" fill="orange"/><circle cx="70" cy="45" r="5" fill="black"/></svg>' },
+            { name: 'Jellyfish', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M30 20 Q50 0 70 20 L60 80 Q50 90 40 80 Z" fill="pink"/></svg>' },
+            { name: 'Seahorse', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M70 30 Q90 50 70 70 Q60 80 50 70 Q40 60 50 50 Q60 40 50 30 Q40 20 30 30 Q20 40 30 50 L20 70" fill="none" stroke="yellow" stroke-width="5"/></svg>' }
+        ];
+
+        function updatePlayerPosition(e) {
+            const x = e.clientX / window.innerWidth * 100;
+            const y = e.clientY / window.innerHeight * 100;
+            player.style.left = `${x}%`;
+            player.style.top = `${y}%`;
+
+            depth = Math.floor(y);
+            depthMeter.textContent = `Depth: ${depth} m`;
+
+            if (depth > 50 && oxygen > 0) {
+                oxygen = Math.max(0, oxygen - 0.1);
+                oxygenMeter.textContent = `Oxygen: ${Math.floor(oxygen)}%`;
+            } else if (depth <= 50 && oxygen < 100) {
+                oxygen = Math.min(100, oxygen + 0.2);
+                oxygenMeter.textContent = `Oxygen: ${Math.floor(oxygen)}%`;
+            }
+
+            if (oxygen === 0 && gameActive) {
+                endGame("You've run out of oxygen! Ascend to replenish.");
+            }
+        }
+
+        function createCreature() {
+            const creature = document.createElement('div');
+            creature.className = 'creature';
+            const type = creatureTypes[Math.floor(Math.random() * creatureTypes.length)];
+            creature.style.backgroundImage = `url('data:image/svg+xml;utf8,${encodeURIComponent(type.svg)}')`;
+            creature.style.left = `${Math.random() * 100}%`;
+            creature.style.top = `${Math.random() * 100}%`;
+            gameContainer.appendChild(creature);
+
+            creature.addEventListener('mouseover', () => {
+                if (gameActive) {
+                    showMessage(`You've discovered a ${type.name}!`);
+                    creature.style.transform = 'scale(1.2)';
+                    setTimeout(() => {
+                        creature.style.transform = 'scale(1)';
+                    }, 1000);
+                }
+            });
+
+            setTimeout(() => {
+                creature.style.left = `${Math.random() * 100}%`;
+                creature.style.top = `${Math.random() * 100}%`;
+            }, 3000);
+
+            setTimeout(() => {
+                gameContainer.removeChild(creature);
+            }, 6000);
+        }
+
+        function createBubble() {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            const size = Math.random() * 20 + 10;
+            bubble.style.width = `${size}px`;
+            bubble.style.height = `${size}px`;
+            bubble.style.left = `${Math.random() * 100}%`;
+            bubble.style.bottom = '-20px';
+            gameContainer.appendChild(bubble);
+
+            setTimeout(() => {
+                gameContainer.removeChild(bubble);
+            }, 5000);
+        }
+
+        function showMessage(text) {
+            message.textContent = text;
+            message.style.display = 'block';
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 3000);
+        }
+
+        function endGame(text) {
+            gameActive = false;
+            showMessage(text);
+            setTimeout(() => {
+                location.reload();
+            }, 5000);
+        }
+
+        gameContainer.addEventListener('mousemove', updatePlayerPosition);
+
+        setInterval(createCreature, 2000);
+        setInterval(createBubble, 500);
+
+        showMessage("Welcome to Aquatic Serenity! Explore the depths, but mind your oxygen.");
+    </script>
+</body>
+</html>

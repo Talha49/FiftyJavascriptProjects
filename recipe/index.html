@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Finder & Meal Planner</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #fdf6e3;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #6c5b4c;
+            color: #fff;
+            padding: 1rem;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        main {
+            margin: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-gap: 2rem;
+        }
+
+        section {
+            background-color: #fff;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #search-section {
+            grid-column: 1 / 3;
+        }
+
+        #search-bar {
+            width: calc(100% - 120px);
+            padding: 0.5rem;
+            margin-right: 1rem;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            background-color: #e27b58;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #d06945;
+        }
+
+        h2 {
+            color: #6c5b4c;
+            border-bottom: 2px solid #e27b58;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .recipe-item, .meal-plan-item {
+            border-bottom: 1px solid #ddd;
+            padding: 0.5rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .recipe-item h3, .meal-plan-item h3 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .meal-plan-item button {
+            background-color: #d9534f;
+        }
+
+        .meal-plan-item button:hover {
+            background-color: #c9302c;
+        }
+
+        #shopping-list li {
+            padding: 0.5rem 0;
+            cursor: pointer;
+        }
+
+        #shopping-list li.purchased {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        Recipe Finder & Meal Planner
+    </header>
+
+    <main>
+        <section id="search-section">
+            <input type="text" id="search-bar" placeholder="Search by ingredients, cuisine, etc.">
+            <button onclick="searchRecipes()">Search</button>
+        </section>
+
+        <section id="results-section">
+            <h2>Recipes</h2>
+            <div id="recipe-list"></div>
+        </section>
+
+        <section id="meal-plan-section">
+            <h2>Meal Plan</h2>
+            <div id="meal-plan-list"></div>
+            <button onclick="generateShoppingList()">Generate Shopping List</button>
+        </section>
+
+        <section id="shopping-list-section">
+            <h2>Shopping List</h2>
+            <ul id="shopping-list"></ul>
+        </section>
+    </main>
+
+    <script>
+       const recipes = [{
+             id: 1, name: 'Spaghetti Bolognese', ingredients: ['spaghetti', 'beef', 'tomato', 'onion', 'garlic'], cuisine: 'Italian', time: 30 },
+  { id: 2, name: 'Chicken Curry', ingredients: ['chicken', 'curry powder', 'coconut milk', 'onion', 'garlic'], cuisine: 'Indian', time: 45 },
+  { id: 3, name: 'Vegetable Stir Fry', ingredients: ['broccoli', 'carrot', 'soy sauce', 'ginger', 'garlic'], cuisine: 'Chinese', time: 20 },
+  { id: 4, name: 'Tacos', ingredients: ['tortilla', 'beef', 'cheese', 'lettuce', 'tomato'], cuisine: 'Mexican', time: 25 },
+  { id: 5, name: 'Miso Soup', ingredients: ['miso paste', 'tofu', 'seaweed', 'green onion'], cuisine: 'Japanese', time: 15 },
+  { id: 6, name: 'Pad Thai', ingredients: ['rice noodles', 'shrimp', 'peanut', 'egg', 'bean sprout'], cuisine: 'Thai', time: 30 },
+  { id: 7, name: 'Burger', ingredients: ['bun', 'beef patty', 'lettuce', 'tomato', 'cheese'], cuisine: 'American', time: 25 },
+  { id: 8, name: 'Fish & Chips', ingredients: ['fish fillets', 'potato', 'flour', 'oil'], cuisine: 'British', time: 40 },
+  { id: 9, name: 'Pizza Margherita', ingredients: ['pizza dough', 'tomato', 'mozzarella', 'basil'], cuisine: 'Italian', time: 35 },
+  { id: 10, name: 'Pancakes', ingredients: ['flour', 'milk', 'egg', 'syrup'], cuisine: 'American', time: 20 },
+  { id: 11, name: 'Chicken Tikka Masala', ingredients: ['chicken', 'tomato', 'onion', 'ginger', 'garlic'], cuisine: 'Indian', time: 40 },
+  { id: 12, name: 'Palak Paneer', ingredients: ['spinach', 'paneer', 'garlic', 'ginger', 'cumin'], cuisine: 'Indian', time: 30 },
+  { id: 13, name: 'Biryani', ingredients: ['basmati rice', 'chicken', 'onion', 'cumin', 'coriander'], cuisine: 'Pakistani', time: 40 },
+  { id: 14, name: 'Haleem', ingredients: ['wheat', 'lentil', 'meat', 'spices', 'garlic'], cuisine: 'Pakistani', time: 50 },
+  { id: 15, name: 'Samosas', ingredients: ['flour', 'potato', 'peas', 'onion', 'spices'], cuisine: 'Pakistani', time: 30 },
+  { id: 16, name: 'Tandoori Chicken', ingredients: ['chicken', 'yogurt', 'lemon', 'cumin', 'coriander'], cuisine: 'Indian', time: 30 },
+  { id: 17, name: 'Naan Bread', ingredients: ['flour', 'yeast', 'yogurt', 'salt', 'sugar'], cuisine: 'Indian', time: 20 },
+  { id: 18, name: 'Butter Chicken', ingredients: ['chicken', 'butter', 'tomato', 'garlic', 'ginger'], cuisine: 'Indian', time: 30 },
+  { id: 19, name: 'Karachi Beef Nihari', ingredients: ['beef', 'bone marrow', 'wheat flour', 'spices', 'garlic'], cuisine: 'Pakistani', time: 50 },
+  { id: 20, name: 'Lahori Charga', ingredients: ['chicken', 'spices', 'garlic', 'ginger', 'lemon'], cuisine: 'Pakistani', time: 30 },
+  {
+  id: 51, name: 'Chicken Qorma', ingredients: ['chicken', 'yogurt', 'cumin', 'coriander', 'cardamom'], cuisine: 'Pakistani', time: 30
+},
+{
+  id: 52, name: 'Sag Aloo', ingredients: ['spinach', 'potato', 'garlic', 'ginger', 'cumin'], cuisine: 'Indian', time: 25
+},
+{
+  id: 53, name: 'Chana Masala', ingredients: ['chickpea', 'onion', 'tomato', 'cumin', 'coriander'], cuisine: 'Indian', time: 30
+},
+{
+  id: 54, name: 'Bhindi Masala', ingredients: ['okra', 'onion', 'tomato', 'cumin', 'coriander'], cuisine: 'Indian', time: 25
+},
+{
+  id: 55, name: 'Karahi Chicken', ingredients: ['chicken', 'bell pepper', 'onion', 'tomato', 'cumin'], cuisine: 'Pakistani', time: 25
+},
+{
+  id: 56, name: 'Mattar Paneer', ingredients: ['peas', 'paneer', 'onion', 'tomato', 'cumin'], cuisine: 'Indian', time: 30
+},
+{
+  id: 57, name: 'Chicken Tikka', ingredients: ['chicken', 'yogurt', 'lemon', 'cumin', 'coriander'], cuisine: 'Indian', time: 20
+},
+{
+  id: 58, name: 'Rajma Masala', ingredients: ['kidney bean', 'onion', 'tomato', 'cumin', 'coriander'], cuisine: 'Indian', time: 30
+},
+{
+  id: 59, name: 'Baingan Bharta', ingredients: ['eggplant', 'onion', 'tomato', 'garlic', 'ginger'], cuisine: 'Indian', time: 25
+},
+{
+  id: 60, name: 'Chicken Korma', ingredients: ['chicken', 'yogurt', 'cumin', 'coriander', 'cardamom'], cuisine: 'Pakistani', time: 30
+},
+
+        ];
+        function searchRecipes() {
+            const query = document.getElementById('search-bar').value.toLowerCase();
+            const filteredRecipes = recipes.filter(recipe =>
+                recipe.name.toLowerCase().includes(query) ||
+                recipe.ingredients.some(ingredient => ingredient.toLowerCase().includes(query)) ||
+                recipe.cuisine.toLowerCase().includes(query)
+            );
+
+            displayRecipes(filteredRecipes);
+        }
+
+        function displayRecipes(filteredRecipes) {
+            const recipeList = document.getElementById('recipe-list');
+            recipeList.innerHTML = '';
+
+            filteredRecipes.forEach(recipe => {
+                const recipeItem = document.createElement('div');
+                recipeItem.classList.add('recipe-item');
+                recipeItem.innerHTML = `
+                    <h3>${recipe.name}</h3>
+                    <p>Cuisine: ${recipe.cuisine}</p>
+                    <p>Time: ${recipe.time} minutes</p>
+                    <button onclick="addToMealPlan(${recipe.id})">Add to Meal Plan</button>
+                `;
+                recipeList.appendChild(recipeItem);
+            });
+        }
+
+        function addToMealPlan(recipeId) {
+            const mealPlan = JSON.parse(localStorage.getItem('mealPlan')) || [];
+            const recipe = recipes.find(r => r.id === recipeId);
+            mealPlan.push(recipe);
+            localStorage.setItem('mealPlan', JSON.stringify(mealPlan));
+            displayMealPlan();
+        }
+
+        function displayMealPlan() {
+            const mealPlan = JSON.parse(localStorage.getItem('mealPlan')) || [];
+            const mealPlanList = document.getElementById('meal-plan-list');
+            mealPlanList.innerHTML = '';
+
+            mealPlan.forEach((recipe, index) => {
+                const mealPlanItem = document.createElement('div');
+                mealPlanItem.classList.add('meal-plan-item');
+                mealPlanItem.innerHTML = `
+                    <h3>${recipe.name}</h3>
+                    <button onclick="removeFromMealPlan(${index})">Remove</button>
+                `;
+                mealPlanList.appendChild(mealPlanItem);
+            });
+        }
+
+        function removeFromMealPlan(index) {
+            const mealPlan = JSON.parse(localStorage.getItem('mealPlan')) || [];
+            mealPlan.splice(index, 1);
+            localStorage.setItem('mealPlan', JSON.stringify(mealPlan));
+            displayMealPlan();
+        }
+
+        function generateShoppingList() {
+            const mealPlan = JSON.parse(localStorage.getItem('mealPlan')) || [];
+            const shoppingList = [];
+
+            mealPlan.forEach(recipe => {
+                recipe.ingredients.forEach(ingredient => {
+                    if (!shoppingList.includes(ingredient)) {
+                        shoppingList.push(ingredient);
+                    }
+                });
+            });
+
+            const shoppingListElement = document.getElementById('shopping-list');
+            shoppingListElement.innerHTML = '';
+
+            shoppingList.forEach(item => {
+                const listItem = document.createElement('li');
+                listItem.textContent = item;
+                listItem.onclick = () => listItem.classList.toggle('purchased');
+                shoppingListElement.appendChild(listItem);
+            });
+
+            localStorage.setItem('shoppingList', JSON.stringify(shoppingList));
+        }
+
+        function displayShoppingList() {
+            const shoppingList = JSON.parse(localStorage.getItem('shoppingList')) || [];
+            const shoppingListElement = document.getElementById('shopping-list');
+            shoppingListElement.innerHTML = '';
+
+            shoppingList.forEach(item => {
+                const listItem = document.createElement('li');
+                listItem.textContent = item;
+                listItem.onclick = () => listItem.classList.toggle('purchased');
+                shoppingListElement.appendChild(listItem);
+            });
+        }
+
+        window.onload = function () {
+            displayMealPlan();
+            displayShoppingList();
+        };
+    </script>
+</body>
+</html>

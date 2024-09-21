@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algorithm Adventure</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Courier New', monospace;
+            background: #0a0a2a;
+            color: #00ff00;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #gameContainer {
+            width: 800px;
+            height: 600px;
+            background: #000033;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #gameScreen {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+    #inputArea {
+    display: flex;
+    padding: 10px;
+    background: #000022;
+    flex-direction: column; /* Stack textarea and button */
+}
+
+#userInput {
+    width: 100%;
+    background: #000044;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    padding: 10px;
+    font-family: 'Courier New', monospace;
+    resize: vertical; /* Allow vertical resizing */
+    margin-bottom: 10px; /* Space between textarea and button */
+}
+
+#submitBtn {
+    background: #003300;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    padding: 10px;
+    cursor: pointer;
+    align-self: flex-end; /* Align the button to the right */
+}
+
+        .challenge {
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #000044;
+            border-radius: 5px;
+        }
+        .success {
+            color: #00ff00;
+        }
+        .error {
+            color: #ff0000;
+        }
+        #progressBarContainer {
+            background: #000044;
+            border: 1px solid #00ff00;
+            height: 20px;
+            border-radius: 5px;
+            margin: 10px 20px;
+            overflow: hidden;
+        }
+        #progressBar {
+            height: 100%;
+            background: #00ff00;
+            width: 0%;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="progressBarContainer">
+            <div id="progressBar"></div>
+        </div>
+        <div id="gameScreen"></div>
+        <div id="inputArea">
+    <textarea id="userInput" placeholder="Enter your solution..." rows="4"></textarea>
+    <button id="submitBtn">Submit</button>
+</div>
+
+    </div>
+
+    <script>
+        // Game classes
+        class Challenge {
+            constructor(description, validator, hint = '') {
+                this.description = description;
+                this.validator = validator;
+                this.hint = hint;
+            }
+
+            validate(input) {
+                return this.validator(input);
+            }
+        }
+
+        class Player {
+            constructor() {
+                this.score = 0;
+                this.level = 1;
+            }
+
+            addScore(points) {
+                this.score += points;
+                if (this.score >= this.level * 100) {
+                    this.levelUp();
+                }
+            }
+
+            levelUp() {
+                this.level++;
+                game.addMessage(`Congratulations! You've reached level ${this.level}!`, 'success');
+            }
+        }
+
+        class Game {
+            constructor() {
+                this.challenges = [];
+                this.currentChallenge = 0;
+                this.player = new Player();
+                this.totalChallenges = 0;
+            }
+
+            addChallenge(challenge) {
+                this.challenges.push(challenge);
+                this.totalChallenges++;
+            }
+
+            start() {
+                this.shuffleChallenges();
+                this.displayChallenge();
+            }
+
+            shuffleChallenges() {
+                // Shuffle challenges to make them appear in random order
+                for (let i = this.challenges.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [this.challenges[i], this.challenges[j]] = [this.challenges[j], this.challenges[i]];
+                }
+            }
+
+            displayChallenge() {
+                const challenge = this.challenges[this.currentChallenge];
+                this.addMessage(`Challenge ${this.currentChallenge + 1}: ${challenge.description}`);
+                this.updateProgressBar();
+            }
+
+            submitSolution(solution) {
+                const challenge = this.challenges[this.currentChallenge];
+                if (challenge.validate(solution)) {
+                    this.player.addScore(10);
+                    this.addMessage(`Correct! Your score is now ${this.player.score}`, 'success');
+                    this.currentChallenge++;
+                    if (this.currentChallenge < this.challenges.length) {
+                        this.displayChallenge();
+                    } else {
+                        this.addMessage("Congratulations! You've completed all challenges!", 'success');
+                    }
+                } else {
+                    this.addMessage(`Incorrect. Try again! ${challenge.hint ? 'Hint: ' + challenge.hint : ''}`, 'error');
+                }
+            }
+
+            addMessage(message, className = '') {
+                const gameScreen = document.getElementById('gameScreen');
+                const messageElement = document.createElement('div');
+                messageElement.textContent = message;
+                messageElement.className = `challenge ${className}`;
+                gameScreen.appendChild(messageElement);
+                gameScreen.scrollTop = gameScreen.scrollHeight;
+            }
+
+            updateProgressBar() {
+                const progressBar = document.getElementById('progressBar');
+                const progress = ((this.currentChallenge + 1) / this.totalChallenges) * 100;
+                progressBar.style.width = `${progress}%`;
+            }
+        }
+
+        // Initialize game
+        const game = new Game();
+
+        // Add multiple challenges
+        const challenges = [
+            new Challenge("Convert binary 1010 to decimal:", input => parseInt(input) === 10),
+            new Challenge("What's the time complexity of binary search?", input => input.toLowerCase() === "o(log n)"),
+            new Challenge("Implement a function to check if a word is a palindrome. Return 'true' or 'false':", input => {
+                try {
+                    const fn = new Function('word', input);
+                    return fn('racecar') === true && fn('hello') === false;
+                } catch (e) {
+                    return false;
+                }
+            }, "Think about reversing the string and comparing it with the original."),
+            new Challenge("What data structure would you use to implement a LIFO (Last In, First Out) collection?", input => input.toLowerCase() === "stack"),
+            new Challenge("Calculate the sum of numbers from 1 to 100 using the formula: n * (n + 1) / 2. Enter the result:", input => parseInt(input) === 5050),
+            new Challenge("Convert hexadecimal '1A' to decimal:", input => parseInt(input) === 26),
+            new Challenge("What is the Big-O notation for a loop that runs 'n' times?", input => input.toLowerCase() === "o(n)"),
+            new Challenge("Find the largest prime number less than 50:", input => parseInt(input) === 47),
+            new Challenge("Write a function to return the nth Fibonacci number. Provide the result of Fibonacci(5):", input => {
+                try {
+                    const fn = new Function('n', input);
+                    return fn(5) === 5;
+                } catch (e) {
+                    return false;
+                }
+            }, "Remember Fibonacci series starts with 0, 1."),
+            new Challenge("What's the output of the expression '2 + 2 * 2'?", input => parseInt(input) === 6),
+            new Challenge("Convert '11011011' from binary to decimal:", input => parseInt(input) === 219),
+            new Challenge("What's the Big-O notation of quicksort in the average case?", input => input.toLowerCase() === "o(n log n)"),
+            new Challenge("What data structure uses the concept of FIFO (First In, First Out)?", input => input.toLowerCase() === "queue"),
+            new Challenge("Write a function to reverse a string. Provide the reversed string for 'hello':", input => {
+                try {
+                    const fn = new Function('str', input);
+                    return fn('hello') === 'olleh';
+                } catch (e) {
+                    return false;
+                }
+            }, "Use string methods to reverse."),
+            new Challenge("What does 'NaN' stand for in JavaScript?", input => input.toLowerCase() === "not a number"),
+            new Challenge("What is the output of '3 + 2 * 5 / 2' in JavaScript?", input => parseFloat(input) === 8),
+                       new Challenge("Write a function to find the factorial of a number. Provide the factorial of 5:", input => {
+                try {
+                    const fn = new Function('n', input);
+                    return fn(5) === 120;
+                } catch (e) {
+                    return false;
+                }
+            }, "Factorial of n is the product of all positive integers less than or equal to n."),
+
+            new Challenge("What does the 'typeof' operator return for an array in JavaScript?", input => input.toLowerCase() === "object"),
+
+            new Challenge("Convert the decimal number '255' to hexadecimal:", input => input.toLowerCase() === "ff"),
+
+            new Challenge("What is the result of '0.1 + 0.2 === 0.3' in JavaScript?", input => input.toLowerCase() === "false"),
+
+            new Challenge("Which data structure would you use for a Last In, First Out operation?", input => input.toLowerCase() === "stack"),
+
+            new Challenge("What is the Big-O notation for the best case of quicksort?", input => input.toLowerCase() === "o(n log n)"),
+
+            new Challenge("Write a function that returns the square of a number. What is the square of 8?", input => {
+                try {
+                    const fn = new Function('n', input);
+                    return fn(8) === 64;
+                } catch (e) {
+                    return false;
+                }
+            }),
+
+            new Challenge("What does '===', the triple equals sign, check in JavaScript?", input => input.toLowerCase() === "strict equality"),
+
+            new Challenge("What will the following expression return in JavaScript: 'null == undefined'?", input => input.toLowerCase() === "true"),
+
+            new Challenge("Which data structure allows insertion and deletion from both ends?", input => input.toLowerCase() === "deque"),
+
+            new Challenge("What is the base case in a recursive function?", input => input.toLowerCase().includes("stopping condition")),
+
+            new Challenge("Convert the hexadecimal number '1A3F' to decimal:", input => parseInt(input, 10) === 6719),
+
+            new Challenge("What is the time complexity of accessing an element in an array by index?", input => input.toLowerCase() === "o(1)"),
+
+            new Challenge("Write a function that returns the length of a string. What is the length of 'hello'?", input => {
+                try {
+                    const fn = new Function('str', input);
+                    return fn('hello') === 5;
+                } catch (e) {
+                    return false;
+                }
+            }),
+
+            new Challenge("What is the binary representation of the decimal number '13'?", input => input === "1101"),
+
+            new Challenge("Explain the concept of 'closures' in JavaScript.", input => input.toLowerCase().includes("function") && input.toLowerCase().includes("lexical")),
+
+            new Challenge("Write a function that checks if a number is even or odd. What does the function return for 3?", input => {
+                try {
+                    const fn = new Function('n', input);
+                    return fn(3) === "odd";
+                } catch (e) {
+                    return false;
+                }
+            }),
+
+            new Challenge("Convert the octal number '17' to decimal:", input => parseInt(input, 10) === 15),
+
+            new Challenge("What is the result of the following expression: '2 ** 3' in JavaScript?", input => parseInt(input, 10) === 8),
+
+            new Challenge("What data structure would you use to implement a priority queue?", input => input.toLowerCase() === "heap" || input.toLowerCase() === "binary heap"),
+            
+            new Challenge("What is the Big-O notation for the worst case of binary search?", input => input.toLowerCase() === "o(log n)"),
+
+            new Challenge("Write a function to reverse a string. What is the reverse of 'algorithm'?", input => {
+                try {
+                    const fn = new Function('str', input);
+                    return fn('algorithm') === "mhtirogla";
+                } catch (e) {
+                    return false;
+                }
+            }),
+
+            new Challenge("Convert the binary number '101010' to decimal:", input => parseInt(input, 10) === 42)
+        ];
+
+        // Add all challenges to the game
+        challenges.forEach(challenge => game.addChallenge(challenge));
+
+        // Event listeners
+        document.getElementById('submitBtn').addEventListener('click', () => {
+            const solution = document.getElementById('userInput').value;
+            game.submitSolution(solution);
+            document.getElementById('userInput').value = '';
+        });
+
+        document.getElementById('userInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('submitBtn').click();
+            }
+        });
+
+        // Start the game
+        game.start();
+    </script>
+</body>
+</html>

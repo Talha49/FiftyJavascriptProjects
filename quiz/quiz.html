@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Quiz App</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <h1 class="gradient-text"><i class="fas fa-question-circle"></i> Glitchy Coders Quiz</h1>
+            <div class="quiz-info">
+                <p id="question-count"><i class="fas fa-list-ol"></i> <span></span></p>
+                <p id="quiz-timer"><i class="fas fa-clock"></i> <span></span></p>
+            </div>
+        </div>
+        <div id="quiz" class="quiz-content">
+            <!-- Quiz content will be dynamically injected here -->
+        </div>
+        <button id="submit-btn" class="btn gradient-btn"><i class="fas fa-check-circle"></i> Submit</button>
+        
+        <div class="admin-link">
+            <a href="admin.html" class="btn gradient-btn"><i class="fas fa-user-cog"></i> Admin Dashboard</a>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

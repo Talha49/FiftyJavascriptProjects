@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <h1 class="gradient-text"><i class="fas fa-user-cog"></i> Quizes Dashboard</h1>
+            <p>Create and manage quizzes</p>
+        </div>
+        <form id="quiz-form">
+            <input type="hidden" id="edit-index" value="">
+            <div class="form-group">
+                <label for="question"><i class="fas fa-question-circle"></i> Question</label>
+                <input type="text" id="question" placeholder="Enter the question" required>
+            </div>
+            <div class="form-group">
+                <label for="option1"><i class="fas fa-check-circle"></i> Option 1</label>
+                <input type="text" id="option1" placeholder="Enter option 1" required>
+            </div>
+            <div class="form-group">
+                <label for="option2"><i class="fas fa-check-circle"></i> Option 2</label>
+                <input type="text" id="option2" placeholder="Enter option 2" required>
+            </div>
+            <div class="form-group">
+                <label for="option3"><i class="fas fa-check-circle"></i> Option 3</label>
+                <input type="text" id="option3" placeholder="Enter option 3" required>
+            </div>
+            <div class="form-group">
+                <label for="option4"><i class="fas fa-check-circle"></i> Option 4</label>
+                <input type="text" id="option4" placeholder="Enter option 4" required>
+            </div>
+            <div class="form-group">
+                <label for="correct"><i class="fas fa-star"></i> Correct Answer</label>
+                <input type="text" id="correct" placeholder="Enter the correct answer" required>
+            </div>
+            <button type="submit" id="save-btn" class="btn gradient-btn"><i class="fas fa-save"></i> Save Quiz</button>
+        </form>
+        <div id="quiz-list" class="quiz-list">
+            <!-- Quiz list will be dynamically populated here -->
+        </div>
+        <div class="admin-link">
+            <a href="quiz.html" class="btn gradient-btn"><i class="fas fa-home"></i> Back to Quiz</a>
+        </div>
+    </div>
+    <script src="admin.js"></script>
+</body>
+</html>

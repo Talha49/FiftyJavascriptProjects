@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Quandary</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Arial', sans-serif;
+            background: #000;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        #gameContainer {
+            width: 500px;
+            height: 700px;
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(0,255,255,0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #gameBoard {
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-gap: 10px;
+            padding: 20px;
+            perspective: 1000px;
+        }
+        .quantum-bit {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.5s ease;
+            transform-style: preserve-3d;
+        }
+        .quantum-bit:hover {
+            box-shadow: 0 0 15px rgba(0,255,255,0.5);
+        }
+        .quantum-bit.collapsed {
+            transform: rotateY(180deg);
+        }
+        .quantum-bit .front, .quantum-bit .back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+        }
+        .quantum-bit .front {
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+        }
+        .quantum-bit .back {
+            background: #0f0f0f;
+            transform: rotateY(180deg);
+        }
+        #controls {
+            height: 100px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            color: #000;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        #score, #level, #moves {
+            font-size: 18px;
+        }
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="gameBoard"></div>
+        <div id="controls">
+            <div id="score">Score: 0</div>
+            <div id="moves">Moves: 0</div>
+            <button id="resetBtn">Reset Level</button>
+            <div id="level">Level: 1</div>
+        </div>
+    </div>
+    <div id="message"></div>
+
+    <script>
+        const gameBoard = document.getElementById('gameBoard');
+        const resetBtn = document.getElementById('resetBtn');
+        const scoreDisplay = document.getElementById('score');
+        const levelDisplay = document.getElementById('level');
+        const movesDisplay = document.getElementById('moves');
+        const messageDisplay = document.getElementById('message');
+
+        let score = 0;
+        let level = 1;
+        let moves = 0;
+        let gameState = [];
+        let solution = [];
+
+        function initGame() {
+            gameState = [];
+            solution = [];
+            moves = 0;
+            movesDisplay.textContent = `Moves: ${moves}`;
+            const size = Math.min(5 + level, 25);
+            for (let i = 0; i < size; i++) {
+                const value = Math.random() < 0.5 ? '0' : '1';
+                gameState.push({ value, collapsed: false });
+                solution.push(value);
+            }
+            renderBoard();
+        }
+
+        function renderBoard() {
+            gameBoard.innerHTML = '';
+            gameState.forEach((bit, index) => {
+                const tile = document.createElement('div');
+                tile.className = 'quantum-bit';
+                tile.innerHTML = `
+                    <div class="front">?</div>
+                    <div class="back">${bit.value}</div>
+                `;
+                tile.addEventListener('click', () => toggleBit(index));
+                if (bit.collapsed) {
+                    tile.classList.add('collapsed');
+                }
+                gameBoard.appendChild(tile);
+            });
+        }
+
+        function toggleBit(index) {
+            if (gameState[index].collapsed) return;
+            gameState[index].collapsed = true;
+            moves++;
+            movesDisplay.textContent = `Moves: ${moves}`;
+            renderBoard();
+            checkWinCondition();
+        }
+
+        function checkWinCondition() {
+            const currentState = gameState.map(bit => bit.collapsed ? bit.value : '?').join('');
+            const solutionState = solution.join('');
+            if (currentState === solutionState) {
+                score += level * 100 - moves * 10;
+                scoreDisplay.textContent = `Score: ${score}`;
+                showMessage(`Level Complete! +${level * 100 - moves * 10} points`);
+                setTimeout(() => {
+                    level++;
+                    levelDisplay.textContent = `Level: ${level}`;
+                    initGame();
+                }, 2000);
+            } else if (gameState.every(bit => bit.collapsed)) {
+                showMessage('Try again! Reset the level');
+            }
+        }
+
+        function showMessage(msg) {
+            messageDisplay.textContent = msg;
+            messageDisplay.style.display = 'block';
+            setTimeout(() => {
+                messageDisplay.style.display = 'none';
+            }, 2000);
+        }
+
+        resetBtn.addEventListener('click', initGame);
+
+        initGame();
+    </script>
+</body>
+</html>
